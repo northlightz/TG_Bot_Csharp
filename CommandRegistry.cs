@@ -21,6 +21,7 @@ public static class CommandRegistry
             "start" => "Show welcome message",
             "help" => "Display help information",
             "echo" => "Toggle message echoing",
+            "devs" => "Display info about the bot devs",
             _ => "No description available",
         };
 }
