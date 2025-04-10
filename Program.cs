@@ -4,14 +4,17 @@ public static class Program
 {
     static async Task Main()
     {
-        await Logger.WriteToLogFile("Program Init");
+        await Logger.WriteToLogFile("Program Init", "ProgramInit");
 
         // Load configuration settings from the config file.
-        await Logger.WriteToLogFile("Attempting to read config file.");
+        await Logger.WriteToLogFile("Attempting to read config file.", "ProgramInit");
         await ConfigManager.ReadConfig();
 
         // Check if the log file exists; create it if it doesn't.
-        await Logger.WriteToLogFile("Checking if log file exists to create one or not.");
+        await Logger.WriteToLogFile(
+            "Checking if log file exists to create one or not.",
+            "ProgramInit"
+        );
 
         // Retrieve bot token and proxy settings from the config and initialize the bot.
         if (

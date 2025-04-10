@@ -37,12 +37,14 @@ public static class BotMain
         botCommands = new BotCommands(BotCNC);
 
         await Logger.WriteToLogFile(
-            $"Connected. ID : {BotGet.Id} ProfileName : {BotGet.FirstName}"
+            $"Connected. ID : {BotGet.Id} ProfileName : {BotGet.FirstName}",
+            "BotConnection"
         );
 
         // Notify user that bot is running and how to terminate it.
         await Logger.WriteToLogFile(
-            $"@{BotGet.Username} is now running... Press Enter to terminate"
+            $"@{BotGet.Username} is now running... Press Enter to terminate",
+            "BotConnection"
         );
 
         await Task.Run(() => Console.ReadLine());
@@ -52,7 +54,7 @@ public static class BotMain
         async Task OnError(Exception exception, HandleErrorSource source)
         {
             // Log errors during polling or message handling.
-            await Logger.WriteToLogFile(exception.Message);
+            await Logger.WriteToLogFile(exception.Message, "BotConnection");
         }
 
         async Task OnMessage(Message msg, UpdateType type)
