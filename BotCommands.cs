@@ -14,17 +14,13 @@ public class BotCommands(TelegramBotClient botClient, string botUsername)
 
     public async Task HandleCommands(Message msg)
     {
-        // Track the user who sent the message
-        // پیگیری کاربری که پیام را ارسال کرده است
         if (msg.From != null)
         {
+        // Track the user who sent the message
+        // پیگیری کاربری که پیام را ارسال کرده است
             await DatabaseManager.TrackUser(msg.From);
-        }
-
         // Track the chat where the message was sent
         // پیگیری چتی که پیام در آن ارسال شده است
-        if (msg.Chat != null)
-        {
             await DatabaseManager.TrackChat(msg.Chat);
         }
 
@@ -53,28 +49,24 @@ public class BotCommands(TelegramBotClient botClient, string botUsername)
 
             // Handle commands with username (like "start@PlutoRunnerBot")
             // مدیریت دستورات با نام کاربری (مانند "start@PlutoRunnerBot")
-            string BotCommand;
             if (fullCommand.Contains("@PlutoRunnerBot"))
             {
                 // Split at @ to get command and username
                 string[] parts = fullCommand.Split('@');
-                BotCommand = parts[0];
+                string botcommand = parts[0];
                 string targetUsername = parts[1];
 
                 // Only process if the command is for this bot or in a private chat
                 if (targetUsername.Equals(_botUsername, StringComparison.OrdinalIgnoreCase) ||
-                    msg.Chat.Type == Telegram.Bot.Types.Enums.ChatType.Private)
+                    msg.Chat.Type == ChatType.Private)
                 {
-                    await HandleCommand(BotCommand, CurrentBotChat);
+                    await HandleCommand(botcommand, CurrentBotChat);
                 }
             }
             else
             {
-                BotCommand = fullCommand;
-                await HandleCommand(BotCommand, CurrentBotChat);
+                await HandleCommand(fullCommand, CurrentBotChat);
             }
-
-            await HandleCommand(BotCommand, CurrentBotChat);
         }
     }
 
