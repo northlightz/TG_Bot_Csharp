@@ -9,7 +9,6 @@ public static class CommandRegistry
         { "start", (bc, chat) => bc.StartCommand(chat) },
         { "help", (bc, chat) => bc.HelpCommand(chat) },
         { "echo", (bc, chat) => bc.EchoCommand(chat) },
-        { "devs", (bc, chat) => bc.ShowDevelopersList(chat) },
     };
 
     public static string GetHelpText() =>
@@ -21,7 +20,6 @@ public static class CommandRegistry
             "start" => "Show welcome message",
             "help" => "Display help information",
             "echo" => "Toggle message echoing",
-            "devs" => "Display info about the bot devs",
             _ => "No description available",
         };
 }

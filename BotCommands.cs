@@ -2,37 +2,11 @@ using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
-using Telegramski_Botski.Models;
 
 namespace Telegramski_Botski;
 
 public class BotCommands(TelegramBotClient botClient)
 {
-    private static readonly Dictionary<long, string> _userStates = new();
-    private static readonly List<Developer> _developers = new()
-    {
-        new Developer
-        {
-            Id = "northlightz",
-            FullName = "Seyed Ali Goushegir",
-            Username = "northlightz",
-            Bio = "Rarely coding, prefer IT Support",
-            Skills = new List<string> { "Linux Sysadmin" },
-            Links = new Dictionary<string, string> { { "GitHub", "github.com/northlightz" } },
-            ProfilePhoto = null,
-        },
-        new Developer
-        {
-            Id = "leo69x",
-            FullName = "Seyed Mohammad Mousavi-Kia",
-            Username = "leo69x",
-            Bio = "Trying to learn C",
-            Skills = new List<string> { "Python programming" },
-            Links = new Dictionary<string, string> { { "GitHub", "github.com/leo69x" } },
-            ProfilePhoto = null,
-        },
-    };
-
     private readonly TelegramBotClient _botClient = botClient;
     private static readonly Dictionary<long, bool> _echoStates = new();
 
@@ -115,52 +89,6 @@ public class BotCommands(TelegramBotClient botClient)
         await EchoCommand(chat);
     }
 
-    public async Task ShowDevelopersList(Chat chat)
-    {
-        // Correctly create buttons dynamically from the list of developers
-        var buttons = _developers
-            .Select(dev =>
-                new[] { InlineKeyboardButton.WithCallbackData(dev.FullName, $"/devs/{dev.Id}") }
-            )
-            .ToArray();
-
-        await _botClient.SendMessage(
-            chatId: chat.Id,
-            text: "🚀 Meet Our Developers:",
-            replyMarkup: new InlineKeyboardMarkup(buttons)
-        );
-    }
-
-    public async Task ShowDeveloperProfile(Chat chat, string devId)
-    {
-        var developer = _developers.FirstOrDefault(dev => dev.Id == devId);
-
-        if (developer == null)
-        {
-            await _botClient.SendMessage(chatId: chat.Id, text: "Developer not found.");
-            return;
-        }
-
-        // Format the developer's profile
-        var profileText =
-            $"\u200D <b>{developer.FullName}</b> (@{developer.Username})\n\n"
-            + $"📝 <i>{developer.Bio}</i>\n\n"
-            + $"Skills: {string.Join(", ", developer.Skills)}\n\n"
-            + $"Links:\n"
-            + string.Join(
-                "\n",
-                developer.Links.Select(link => $"<a href=\"{link.Value}\">{link.Key}</a>")
-            );
-
-        await _botClient.SendMessage(
-            chatId: chat.Id,
-            text: profileText,
-            parseMode: ParseMode.Html,
-            replyMarkup: new InlineKeyboardMarkup(
-                InlineKeyboardButton.WithCallbackData("← Back to Devs", "/devs")
-            )
-        );
-    }
 
     public static async Task HandleInlineButtonPress(
         BotCommands botCommands,
@@ -176,18 +104,6 @@ public class BotCommands(TelegramBotClient botClient)
             return;
         }
 
-        if (callbackData == "/devs")
-        {
-            await botCommands.ShowDevelopersList(msg.Chat);
-            return;
-        }
-
-        if (callbackData.StartsWith("/devs/"))
-        {
-            var devId = callbackData.Split('/')[2];
-            await botCommands.ShowDeveloperProfile(msg.Chat, devId);
-            return;
-        }
         switch (commandstrip)
         {
             // Respond when 'help' button is pressed.
@@ -206,7 +122,7 @@ public class BotCommands(TelegramBotClient botClient)
 
             default:
                 break;
-            // Add more inline button actions as needed here.
+                // Add more inline button actions as needed here.
         }
     }
 }
