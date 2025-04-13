@@ -12,6 +12,9 @@ public static class BotMain
 
     public static async Task InitTGBot(string API_KEY, string proxyStr)
     {
+        // Initialize GroupManager
+        await GroupManager.Initialize();
+
         WebProxy BotProxy = new(proxyStr);
 
         // Set up HTTP client with proxy settings for bot connection.
@@ -31,6 +34,7 @@ public static class BotMain
         BotCNC.OnError += OnError;
         BotCNC.OnMessage += OnMessage;
         BotCNC.OnUpdate += OnUpdate;
+        BotCNC.OnMyChatMember += OnMyChatMember;
 
         var BotGet = await BotCNC.GetMe();
 
@@ -80,6 +84,20 @@ public static class BotMain
             {
                 await BotCNC.AnswerCallbackQuery(query.Id, $"You picked {query.Data}");
                 await BotCommands.HandleInlineButtonPress(botCommands, query.Data, query.Message);
+            }
+        }
+
+        async Task OnMyChatMember(ChatMemberUpdated chatMemberUpdated)
+        {
+            if (chatMemberUpdated.NewChatMember.Status == ChatMemberStatus.Administrator ||
+                chatMemberUpdated.NewChatMember.Status == ChatMemberStatus.Member)
+            {
+                await GroupManager.AddGroup(chatMemberUpdated.Chat);
+            }
+            else if (chatMemberUpdated.NewChatMember.Status == ChatMemberStatus.Left ||
+                     chatMemberUpdated.NewChatMember.Status == ChatMemberStatus.Kicked)
+            {
+                await GroupManager.RemoveGroup(chatMemberUpdated.Chat.Id);
             }
         }
     }
