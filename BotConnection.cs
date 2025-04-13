@@ -40,7 +40,11 @@ public static class BotMain
 
         var BotGet = await BotCNC.GetMe();
 
-        botCommands = new BotCommands(BotCNC);
+        // Store the bot's username for command verification
+        string botUsername = BotGet.Username;
+
+        botCommands = new BotCommands(BotCNC, botUsername);
+
 
         await Logger.WriteToLogFile(
             $"Connected. ID : {BotGet.Id} ProfileName : {BotGet.FirstName}",
@@ -171,7 +175,7 @@ public static class BotMain
                 canInviteUsers = true;
                 canPinMessages = true;
                 break;
-                
+
             case ChatMemberRestricted restricted:
                 canPostMessages = restricted.CanSendMessages;
                 canPinMessages = restricted.CanPinMessages;

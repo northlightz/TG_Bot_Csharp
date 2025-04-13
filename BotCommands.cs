@@ -6,9 +6,10 @@ using System.Text;
 
 namespace Telegramski_Botski;
 
-public class BotCommands(TelegramBotClient botClient)
+public class BotCommands(TelegramBotClient botClient, string botUsername)
 {
     private readonly TelegramBotClient _botClient = botClient;
+    private readonly string _botUsername = botUsername;
     private static readonly Dictionary<long, bool> _echoStates = new();
 
     public async Task HandleCommands(Message msg)
@@ -46,17 +47,48 @@ public class BotCommands(TelegramBotClient botClient)
         // بررسی کنید که آیا پیام با پیشوند دستور ('/') شروع می‌شود و بر اساس آن اقدام کنید.
         if (MessageText != null && MessageText.StartsWith('/'))
         {
-            var BotCommand = MessageText.Split('/')[1]; // Extract command text after '/'
-                                                        // استخراج متن دستور بعد از '/'
+            // Extract command text after '/'
+            // استخراج متن دستور بعد از '/'
+            string fullCommand = MessageText.Substring(1); // Remove the leading '/'
+
+            // Handle commands with username (like "start@PlutoRunnerBot")
+            // مدیریت دستورات با نام کاربری (مانند "start@PlutoRunnerBot")
+            string BotCommand;
+            if (fullCommand.Contains("@PlutoRunnerBot"))
+            {
+                // Split at @ to get command and username
+                string[] parts = fullCommand.Split('@');
+                BotCommand = parts[0];
+                string targetUsername = parts[1];
+
+                // Only process if the command is for this bot or in a private chat
+                if (targetUsername.Equals(_botUsername, StringComparison.OrdinalIgnoreCase) ||
+                    msg.Chat.Type == Telegram.Bot.Types.Enums.ChatType.Private)
+                {
+                    await HandleCommand(BotCommand, CurrentBotChat);
+                }
+            }
+            else
+            {
+                BotCommand = fullCommand;
+                await HandleCommand(BotCommand, CurrentBotChat);
+            }
+
             await HandleCommand(BotCommand, CurrentBotChat);
         }
     }
 
     public async Task HandleCommand(string command, Chat chat)
     {
+        await Logger.WriteToLogFile($"Processing command: '{command}'", "BotCommands");
+
         if (CommandRegistry.Commands.TryGetValue(command, out var handler))
         {
             await handler(this, chat);
+        }
+        else
+        {
+            await Logger.WriteToLogFile($"Unknown command: '{command}'", "BotCommands");
         }
     }
 
@@ -120,7 +152,7 @@ public class BotCommands(TelegramBotClient botClient)
     public async Task ListUsersCommand(Chat chat)
     {
         var users = await BotMain.GetAllUsers();
-        
+
         if (users.Count == 0)
         {
             await _botClient.SendMessage(
@@ -137,17 +169,17 @@ public class BotCommands(TelegramBotClient botClient)
         // Limit to 50 users to avoid message length issues
         // محدود به ۵۰ کاربر برای جلوگیری از مشکلات طول پیام
         int displayCount = Math.Min(users.Count, 50);
-        
+
         for (int i = 0; i < displayCount; i++)
         {
             var (id, username, firstName, lastName) = users[i];
-            string displayName = !string.IsNullOrEmpty(firstName) 
-                ? $"{firstName} {lastName ?? ""}".Trim() 
+            string displayName = !string.IsNullOrEmpty(firstName)
+                ? $"{firstName} {lastName ?? ""}".Trim()
                 : username ?? "Unknown";
-                
-            sb.AppendLine($"{i+1}. {displayName} (ID: {id})");
+
+            sb.AppendLine($"{i + 1}. {displayName} (ID: {id})");
         }
-        
+
         if (users.Count > displayCount)
         {
             sb.AppendLine();
@@ -166,7 +198,7 @@ public class BotCommands(TelegramBotClient botClient)
     public async Task ListChatsCommand(Chat chat)
     {
         var chats = await BotMain.GetAllChats();
-        
+
         if (chats.Count == 0)
         {
             await _botClient.SendMessage(
@@ -183,27 +215,27 @@ public class BotCommands(TelegramBotClient botClient)
         // Group chats by type
         // گروه‌بندی چت‌ها بر اساس نوع
         var chatsByType = chats.GroupBy(c => c.Type);
-        
+
         foreach (var group in chatsByType)
         {
             sb.AppendLine($"**{group.Key}s:**");
-            
+
             // Limit to 15 chats per type to avoid message length issues
             // محدود به ۱۵ چت برای هر نوع برای جلوگیری از مشکلات طول پیام
             int displayCount = Math.Min(group.Count(), 15);
             int i = 0;
-            
+
             foreach (var (id, title, _) in group.Take(displayCount))
             {
                 string displayName = !string.IsNullOrEmpty(title) ? title : $"{group.Key} {id}";
                 sb.AppendLine($"{++i}. {displayName} (ID: {id})");
             }
-            
+
             if (group.Count() > displayCount)
             {
                 sb.AppendLine($"...and {group.Count() - displayCount} more {group.Key}s.");
             }
-            
+
             sb.AppendLine();
         }
 
@@ -220,19 +252,19 @@ public class BotCommands(TelegramBotClient botClient)
     {
         var users = await BotMain.GetAllUsers();
         var chats = await BotMain.GetAllChats();
-        
+
         var chatTypes = chats
             .GroupBy(c => c.Type)
             .Select(g => (Type: g.Key, Count: g.Count()))
             .ToList();
-        
+
         var sb = new StringBuilder();
         sb.AppendLine("**Bot Statistics:**");
         sb.AppendLine();
         sb.AppendLine($"Total tracked users: **{users.Count}**");
         sb.AppendLine($"Total tracked chats: **{chats.Count}**");
         sb.AppendLine();
-        
+
         // Chat type breakdown
         // تفکیک انواع چت
         sb.AppendLine("**Chat types:**");
@@ -248,7 +280,7 @@ public class BotCommands(TelegramBotClient botClient)
         sb.AppendLine("- Version: 1.0.0");
         sb.AppendLine("- Database: SQLite");
         sb.AppendLine("- Language: C#");
-        
+
         await _botClient.SendMessage(
             chatId: chat.Id,
             text: sb.ToString(),
@@ -275,7 +307,9 @@ public class BotCommands(TelegramBotClient botClient)
         }
 
         Chat CurrentBotChat = msg.Chat;
-        string commandstrip = callbackData.Split('/')[1];
+        // Extract command from callback data
+        string commandWithPrefix = callbackData.Split('@')[0]; // Remove any username part
+        string commandstrip = commandWithPrefix.Substring(1); // Remove the leading '/'
         if (callbackData == "/echo/toggle")
         {
             await botCommands.HandleEchoToggle(msg.Chat);
