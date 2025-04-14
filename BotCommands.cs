@@ -3,6 +3,7 @@ using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
 using System.Text;
+using System.Collections.Generic;
 
 namespace Telegramski_Botski;
 
@@ -16,6 +17,8 @@ public class BotCommands
     private readonly UserManager _userManager;
     private readonly StatsManager _statsManager;
     private readonly PermissionManager _permissionManager;
+    private static readonly Dictionary<string, bool> _adminPermissions = new();
+    private static readonly Dictionary<string, bool> _userPermissions = new();
 
     public BotCommands(TelegramBotClient botClient, string botUsername)
     {
@@ -421,14 +424,14 @@ public class BotCommands
                             // Toggle a specific permission and show the promote screen again
                             // تغییر وضعیت یک مجوز خاص و نمایش مجدد صفحه ارتقا
                             TogglePermission(stateKey, permAction);
-                            await commands.PromoteUser(msg.Chat.Id, promChatId, promUserId, messageId);
+                            await commands._permissionManager.ShowUserPermissions(msg.Chat.Id, promChatId, promUserId, messageId);
                         }
                     }
                     else
                     {
                         // Show promotion screen
                         // نمایش صفحه ارتقا
-                        await commands.PromoteUser(msg.Chat.Id, promChatId, promUserId, messageId);
+                        await commands._permissionManager.ShowUserPermissions(msg.Chat.Id, promChatId, promUserId, messageId);
                     }
                 }
                 break;
@@ -464,7 +467,7 @@ public class BotCommands
                     {
                         // Show demotion confirmation
                         // نمایش تایید تنزل
-                        await commands.DemoteUser(msg.Chat.Id, demChatId, demUserId, messageId);
+                        await commands._permissionManager.ShowUserPermissions(msg.Chat.Id, demChatId, demUserId, messageId);
                     }
                 }
                 break;
@@ -520,14 +523,14 @@ public class BotCommands
                             // Toggle a specific permission and show the restrict screen again
                             // تغییر وضعیت یک مجوز خاص و نمایش مجدد صفحه محدودیت
                             TogglePermission(stateKey, permAction, true);
-                            await commands.RestrictUser(msg.Chat.Id, resChatId, resUserId, messageId);
+                            await commands._permissionManager.ShowUserPermissions(msg.Chat.Id, resChatId, resUserId, messageId);
                         }
                     }
                     else
                     {
                         // Show restriction screen
                         // نمایش صفحه محدودیت
-                        await commands.RestrictUser(msg.Chat.Id, resChatId, resUserId, messageId);
+                        await commands._permissionManager.ShowUserPermissions(msg.Chat.Id, resChatId, resUserId, messageId);
                     }
                 }
                 break;
@@ -543,13 +546,13 @@ public class BotCommands
                     {
                         // Edit admin permissions
                         // ویرایش مجوزهای مدیر
-                        await commands.PromoteUser(msg.Chat.Id, editChatId, editUserId, messageId);
+                        await commands._permissionManager.ShowUserPermissions(msg.Chat.Id, editChatId, editUserId, messageId);
                     }
                     else if (editType == "user")
                     {
                         // Edit regular user permissions
                         // ویرایش مجوزهای کاربر عادی
-                        await commands.RestrictUser(msg.Chat.Id, editChatId, editUserId, messageId);
+                        await commands._permissionManager.ShowUserPermissions(msg.Chat.Id, editChatId, editUserId, messageId);
                     }
                 }
                 break;
