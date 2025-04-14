@@ -399,4 +399,86 @@ public static class DatabaseManager
 
         return chats;
     }
+
+    /// <summary>
+    /// Retrieves the permissions for a specific user in a specific chat.
+    /// </summary>
+    /// <remarks>
+    /// مجوزهای یک کاربر خاص را در یک چت خاص بازیابی می‌کند.
+    /// </remarks>
+    public static async Task<(bool IsAdmin, bool? CanPostMessages, bool? CanEditMessages, bool? CanDeleteMessages,
+        bool? CanRestrictMembers, bool? CanPromoteMembers, bool? CanChangeInfo, bool? CanInviteUsers, bool? CanPinMessages)> 
+        GetUserPermissions(long userId, long chatId)
+    {
+        await using var connection = GetConnection();
+        await connection.OpenAsync();
+
+        var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT IsAdmin, CanPostMessages, CanEditMessages, CanDeleteMessages,
+                   CanRestrictMembers, CanPromoteMembers, CanChangeInfo, 
+                   CanInviteUsers, CanPinMessages
+            FROM Permissions 
+            WHERE UserId = $userId AND ChatId = $chatId
+        ";
+        command.Parameters.AddWithValue("$userId", userId);
+        command.Parameters.AddWithValue("$chatId", chatId);
+
+        await using var reader = await command.ExecuteReaderAsync();
+        if (await reader.ReadAsync())
+        {
+            bool isAdmin = reader.GetBoolean(0);
+            bool? canPostMessages = reader.IsDBNull(1) ? null : (bool?)reader.GetBoolean(1);
+            bool? canEditMessages = reader.IsDBNull(2) ? null : (bool?)reader.GetBoolean(2);
+            bool? canDeleteMessages = reader.IsDBNull(3) ? null : (bool?)reader.GetBoolean(3);
+            bool? canRestrictMembers = reader.IsDBNull(4) ? null : (bool?)reader.GetBoolean(4);
+            bool? canPromoteMembers = reader.IsDBNull(5) ? null : (bool?)reader.GetBoolean(5);
+            bool? canChangeInfo = reader.IsDBNull(6) ? null : (bool?)reader.GetBoolean(6);
+            bool? canInviteUsers = reader.IsDBNull(7) ? null : (bool?)reader.GetBoolean(7);
+            bool? canPinMessages = reader.IsDBNull(8) ? null : (bool?)reader.GetBoolean(8);
+
+            return (isAdmin, canPostMessages, canEditMessages, canDeleteMessages, 
+                canRestrictMembers, canPromoteMembers, canChangeInfo, canInviteUsers, canPinMessages);
+        }
+
+        return (false, null, null, null, null, null, null, null, null);
+    }
+
+    /// <summary>
+    /// Gets a list of users with permissions in a specific chat.
+    /// </summary>
+    /// <remarks>
+    /// لیستی از کاربران با مجوزها در یک چت خاص را دریافت می‌کند.
+    /// </remarks>
+    public static async Task<List<(long UserId, string Username, string FirstName, bool IsAdmin)>> 
+        GetUsersWithPermissionsInChat(long chatId)
+    {
+        var users = new List<(long UserId, string Username, string FirstName, bool IsAdmin)>();
+        
+        await using var connection = GetConnection();
+        await connection.OpenAsync();
+
+        var command = connection.CreateCommand();
+        command.CommandText = @"
+            SELECT u.Id, u.Username, u.FirstName, p.IsAdmin
+            FROM Permissions p
+            JOIN Users u ON p.UserId = u.Id
+            WHERE p.ChatId = $chatId
+            ORDER BY p.IsAdmin DESC, u.FirstName
+        ";
+        command.Parameters.AddWithValue("$chatId", chatId);
+        
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            var userId = reader.GetInt64(0);
+            string username = reader.IsDBNull(1) ? null : reader.GetString(1);
+            string firstName = reader.IsDBNull(2) ? null : reader.GetString(2);
+            bool isAdmin = reader.GetBoolean(3);
+            
+            users.Add((userId, username, firstName, isAdmin));
+        }
+
+        return users;
+    }
 } 

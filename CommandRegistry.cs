@@ -14,6 +14,7 @@ public static class CommandRegistry
         { "users", (bc, chat) => bc.ListUsersCommand(chat) },
         { "chats", (bc, chat) => bc.ListChatsCommand(chat) },
         { "stats", (bc, chat) => bc.StatsCommand(chat) },
+        { "permissions", (bc, chat) => bc.PermissionsCommand(chat) },
     };
 
     // Gets help text for all commands
@@ -32,6 +33,7 @@ public static class CommandRegistry
             "users" => "List all tracked users",
             "chats" => "List all tracked chats",
             "stats" => "Show bot statistics",
+            "permissions" => "View and manage user permissions",
             _ => "No description available",
         };
 }

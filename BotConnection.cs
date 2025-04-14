@@ -220,4 +220,184 @@ public static class BotMain
     {
         return await DatabaseManager.GetAllChats();
     }
+    
+    /// <summary>
+    /// Checks if the bot has the required permissions to modify user permissions in a chat.
+    /// </summary>
+    /// <remarks>
+    /// بررسی می‌کند آیا ربات مجوزهای لازم برای تغییر مجوزهای کاربر در یک چت را دارد.
+    /// </remarks>
+    public static async Task<(bool CanPromote, bool CanRestrict, string BotStatus)> CheckBotPermissions(long chatId)
+    {
+        try
+        {
+            var botUser = await botClient.GetMe();
+            var chatMember = await botClient.GetChatMember(chatId, botUser.Id);
+            
+            switch (chatMember.Status)
+            {
+                case ChatMemberStatus.Creator:
+                    return (true, true, "creator");
+                    
+                case ChatMemberStatus.Administrator:
+                    var admin = (ChatMemberAdministrator)chatMember;
+                    return (admin.CanPromoteMembers, admin.CanRestrictMembers, "administrator");
+                    
+                default:
+                    return (false, false, chatMember.Status.ToString().ToLower());
+            }
+        }
+        catch (Exception ex)
+        {
+            await Logger.WriteToLogFile($"Error checking bot permissions: {ex.Message}", "BotConnection");
+            return (false, false, "unknown");
+        }
+    }
+    
+    /// <summary>
+    /// Promotes a user to admin in a chat.
+    /// </summary>
+    /// <remarks>
+    /// کاربر را به مدیر در یک چت ارتقا می‌دهد.
+    /// </remarks>
+    public static async Task<bool> PromoteUser(
+        long chatId, 
+        long userId, 
+        bool canChangeInfo = false,
+        bool canPostMessages = false,
+        bool canEditMessages = false,
+        bool canDeleteMessages = false,
+        bool canInviteUsers = false,
+        bool canRestrictMembers = false,
+        bool canPinMessages = false,
+        bool canPromoteMembers = false)
+    {
+        try
+        {
+            await botClient.PromoteChatMember(
+                chatId: chatId,
+                userId: userId,
+                canChangeInfo: canChangeInfo,
+                canPostMessages: canPostMessages,
+                canEditMessages: canEditMessages, 
+                canDeleteMessages: canDeleteMessages,
+                canInviteUsers: canInviteUsers,
+                canRestrictMembers: canRestrictMembers,
+                canPinMessages: canPinMessages,
+                canPromoteMembers: canPromoteMembers
+            );
+            
+            // Update the database
+            await DatabaseManager.UpdatePermissions(
+                userId: userId,
+                chatId: chatId,
+                isAdmin: true,
+                canPostMessages: canPostMessages,
+                canEditMessages: canEditMessages,
+                canDeleteMessages: canDeleteMessages,
+                canRestrictMembers: canRestrictMembers,
+                canPromoteMembers: canPromoteMembers,
+                canChangeInfo: canChangeInfo,
+                canInviteUsers: canInviteUsers,
+                canPinMessages: canPinMessages
+            );
+            
+            await Logger.WriteToLogFile($"User {userId} was promoted in chat {chatId}", "BotConnection");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            await Logger.WriteToLogFile($"Error promoting user: {ex.Message}", "BotConnection");
+            return false;
+        }
+    }
+    
+    /// <summary>
+    /// Restricts a user in a chat.
+    /// </summary>
+    /// <remarks>
+    /// کاربر را در یک چت محدود می‌کند.
+    /// </remarks>
+    public static async Task<bool> RestrictUser(
+        long chatId, 
+        long userId, 
+        bool canSendMessages = true,
+        bool canInviteUsers = true,
+        bool canPinMessages = false,
+        bool canChangeInfo = false)
+    {
+        try
+        {
+            await botClient.RestrictChatMember(
+                chatId: chatId,
+                userId: userId,
+                permissions: new ChatPermissions
+                {
+                    CanSendMessages = canSendMessages,
+                    CanInviteUsers = canInviteUsers,
+                    CanPinMessages = canPinMessages,
+                    CanChangeInfo = canChangeInfo
+                }
+            );
+            
+            // Update the database
+            await DatabaseManager.UpdatePermissions(
+                userId: userId,
+                chatId: chatId,
+                isAdmin: false,
+                canPostMessages: canSendMessages,
+                canChangeInfo: canChangeInfo,
+                canInviteUsers: canInviteUsers,
+                canPinMessages: canPinMessages
+            );
+            
+            await Logger.WriteToLogFile($"User {userId} was restricted in chat {chatId}", "BotConnection");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            await Logger.WriteToLogFile($"Error restricting user: {ex.Message}", "BotConnection");
+            return false;
+        }
+    }
+    
+    /// <summary>
+    /// Demotes an admin to a regular user.
+    /// </summary>
+    /// <remarks>
+    /// یک مدیر را به کاربر عادی تنزل می‌دهد.
+    /// </remarks>
+    public static async Task<bool> DemoteUser(long chatId, long userId)
+    {
+        try
+        {
+            await botClient.PromoteChatMember(
+                chatId: chatId,
+                userId: userId,
+                canChangeInfo: false,
+                canPostMessages: false,
+                canEditMessages: false,
+                canDeleteMessages: false,
+                canInviteUsers: false,
+                canRestrictMembers: false,
+                canPinMessages: false,
+                canPromoteMembers: false
+            );
+            
+            // Update the database
+            await DatabaseManager.UpdatePermissions(
+                userId: userId,
+                chatId: chatId,
+                isAdmin: false
+            );
+            
+            await Logger.WriteToLogFile($"User {userId} was demoted in chat {chatId}", "BotConnection");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            await Logger.WriteToLogFile($"Error demoting user: {ex.Message}", "BotConnection");
+            return false;
+        }
+    }
 }
