@@ -18,7 +18,8 @@ public class EchoManager
     {
         if (_echoStates.GetValueOrDefault(msg.Chat.Id, false) && !string.IsNullOrEmpty(msg.Text) && !msg.Text.StartsWith('/'))
         {
-            await _botClient.SendMessage(msg.Chat.Id, $"Echo: {msg.Text}");
+            var echoText = await LanguageManager.GetLocalizedString("echo", msg.Chat.Id);
+            await _botClient.SendMessage(msg.Chat.Id, $"{echoText}: {msg.Text}");
         }
     }
 
@@ -31,11 +32,12 @@ public class EchoManager
     public async Task ShowEchoStatus(Chat chat)
     {
         var currentState = _echoStates.GetValueOrDefault(chat.Id, false);
-        var buttonText = currentState ? "Toggle Off" : "Toggle On";
+        var buttonText = await LanguageManager.GetLocalizedString(currentState ? "toggle_off" : "toggle_on", chat.Id);
+        var statusText = await LanguageManager.GetLocalizedString(currentState ? "echo_on" : "echo_off", chat.Id);
 
         await _botClient.SendMessage(
             chatId: chat.Id,
-            text: $"Echo is currently {(currentState ? "ON" : "OFF")}",
+            text: statusText,
             replyMarkup: new InlineKeyboardMarkup(
                 InlineKeyboardButton.WithCallbackData(buttonText, "/echo/toggle")
             )

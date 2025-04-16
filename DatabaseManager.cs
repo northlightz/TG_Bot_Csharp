@@ -41,10 +41,13 @@ public static class DatabaseManager
         await using var connection = GetConnection();
         await connection.OpenAsync();
 
-        // Create Users table
-        // ایجاد جدول کاربران
-        var createUsersTableCommand = connection.CreateCommand();
-        createUsersTableCommand.CommandText = @"
+        using var command = connection.CreateCommand();
+        command.CommandText = @"
+            CREATE TABLE IF NOT EXISTS chat_languages (
+                chat_id INTEGER PRIMARY KEY,
+                language TEXT NOT NULL DEFAULT 'en'
+            );
+
             CREATE TABLE IF NOT EXISTS Users (
                 Id INTEGER PRIMARY KEY,
                 Username TEXT NULL,
@@ -56,7 +59,7 @@ public static class DatabaseManager
                 LastSeen TEXT NOT NULL
             )
         ";
-        await createUsersTableCommand.ExecuteNonQueryAsync();
+        await command.ExecuteNonQueryAsync();
 
         // Create Chats table for groups, channels, etc.
         // ایجاد جدول چت‌ها برای گروه‌ها، کانال‌ها و غیره
@@ -480,5 +483,41 @@ public static class DatabaseManager
         }
 
         return users;
+    }
+
+    /// <summary>
+    /// Gets or sets the language preference for a chat.
+    /// </summary>
+    /// <remarks>
+    /// زبان مورد نظر برای یک چت را دریافت یا تنظیم می‌کند.
+    /// </remarks>
+    public static async Task<string> GetChatLanguage(long chatId)
+    {
+        using var connection = GetConnection();
+        await connection.OpenAsync();
+
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT language FROM chat_languages WHERE chat_id = @chatId";
+        command.Parameters.AddWithValue("@chatId", chatId);
+
+        var result = await command.ExecuteScalarAsync();
+        return result?.ToString() ?? "en"; // Default to English if not set
+    }
+
+    public static async Task SetChatLanguage(long chatId, string language)
+    {
+        using var connection = GetConnection();
+        await connection.OpenAsync();
+
+        using var command = connection.CreateCommand();
+        command.CommandText = @"
+            INSERT INTO chat_languages (chat_id, language)
+            VALUES (@chatId, @language)
+            ON CONFLICT(chat_id) DO UPDATE SET language = @language";
+        
+        command.Parameters.AddWithValue("@chatId", chatId);
+        command.Parameters.AddWithValue("@language", language);
+
+        await command.ExecuteNonQueryAsync();
     }
 } 

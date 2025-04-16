@@ -15,6 +15,7 @@ public class BotCommands
     private readonly UserManager _userManager;
     private readonly StatsManager _statsManager;
     private readonly PermissionManager _permissionManager;
+    private readonly LanguageManager _languageManager;
     private static readonly Dictionary<string, bool> _adminPermissions = new();
     private static readonly Dictionary<string, bool> _userPermissions = new();
 
@@ -26,6 +27,7 @@ public class BotCommands
         _userManager = new UserManager(botClient);
         _statsManager = new StatsManager(botClient);
         _permissionManager = new PermissionManager(botClient);
+        _languageManager = new LanguageManager(botClient);
     }
 
     // Main method to handle incoming messages and commands
@@ -236,6 +238,11 @@ public class BotCommands
         }
     }
 
+    public async Task LanguageCommand(Chat chat)
+    {
+        await _languageManager.ToggleLanguage(chat);
+    }
+
     public static async Task HandleInlineButtonPress(
         BotCommands botCommands,
         string callbackData,
@@ -313,6 +320,9 @@ public class BotCommands
             // پاسخ دادن وقتی دکمه 'مجوزها' فشرده می‌شود
             case "permissions":
                 await botCommands.PermissionsCommand(CurrentBotChat, msg.MessageId);
+                break;
+            case "/language/toggle":
+                await botCommands.LanguageCommand(msg.Chat);
                 break;
 
             default:
