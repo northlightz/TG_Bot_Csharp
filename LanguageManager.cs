@@ -24,8 +24,8 @@ public class LanguageManager
     public async Task ShowLanguageStatus(Chat chat)
     {
         var currentLanguage = await DatabaseManager.GetChatLanguage(chat.Id);
-        var buttonText = currentLanguage == "en" ? "فارسی" : "English";
-        var statusText = currentLanguage == "en" ? "Current language: English" : "زبان فعلی: فارسی";
+        var buttonText = currentLanguage == "en" ? "English" : "فارسی";
+        var statusText = currentLanguage == "en" ? "زبان فعلی: فارسی" : "Current language: English";
 
         await _botClient.SendMessage(
             chatId: chat.Id,
