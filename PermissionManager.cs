@@ -68,11 +68,11 @@ public class PermissionManager
             sb.AppendLine("❌ " + await CommandTexts.GetLocalizedCommandText("permissions_can_restrict", chatId));
         
         sb.AppendLine();
-        sb.AppendLine("**Users in this chat:**");
+        sb.AppendLine(await CommandTexts.GetLocalizedCommandText("permissions_users_in_chat", chatId));
         
         if (users.Count == 0)
         {
-            sb.AppendLine("No tracked users with permissions in this chat.");
+            sb.AppendLine(await CommandTexts.GetLocalizedCommandText("permissions_no_users", chatId));
         }
         
         var buttons = new List<InlineKeyboardButton[]>();

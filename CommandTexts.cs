@@ -64,6 +64,8 @@ public static class CommandTexts
             "permissions_demote_failed" => "تنزل کاربر ناموفق بود. مطمئن شوید که من مجوزهای لازم را دارم.",
             "permissions_restrict_success" => "محدودیت‌های کاربر با موفقیت به‌روزرسانی شد.",
             "permissions_restrict_failed" => "به‌روزرسانی محدودیت‌های کاربر ناموفق بود. مطمئن شوید که من مجوزهای لازم را دارم.",
+            "permissions_users_in_chat" => "**کاربران در این چت:**",
+            "permissions_no_users" => "هیچ کاربری با مجوز در این چت ردیابی نشده است.",
             _ => key
         };
     }
@@ -122,6 +124,8 @@ public static class CommandTexts
             "permissions_demote_failed" => "Failed to demote user. Make sure I have the right permissions.",
             "permissions_restrict_success" => "User restrictions were successfully updated.",
             "permissions_restrict_failed" => "Failed to update user restrictions. Make sure I have the right permissions.",
+            "permissions_users_in_chat" => "**Users in this chat:**",
+            "permissions_no_users" => "No tracked users with permissions in this chat.",
             _ => key
         };
     }
