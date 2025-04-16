@@ -24,15 +24,15 @@ public class PermissionManager
         var (canPromote, canRestrict, botStatus) = await BotMain.CheckBotPermissions(targetChatId);
         
         var sb = new StringBuilder();
-        sb.AppendLine($"**Permissions Management**");
+        sb.AppendLine(await CommandTexts.GetLocalizedCommandText("permissions_management", chatId));
         sb.AppendLine();
         
         if (!canPromote && !canRestrict)
         {
-            sb.AppendLine($"⚠️ I don't have permission to manage users in this chat.");
-            sb.AppendLine($"My status: {botStatus}");
+            sb.AppendLine(await CommandTexts.GetLocalizedCommandText("permissions_no_access", chatId));
+            sb.AppendLine(string.Format(await CommandTexts.GetLocalizedCommandText("permissions_bot_status", chatId), botStatus));
             sb.AppendLine();
-            sb.AppendLine("To manage permissions, I need to be an administrator with appropriate permissions.");
+            sb.AppendLine(await CommandTexts.GetLocalizedCommandText("permissions_need_admin", chatId));
             
             if (messageId.HasValue)
             {
@@ -58,14 +58,14 @@ public class PermissionManager
         var users = await DatabaseManager.GetUsersWithPermissionsInChat(targetChatId);
         
         if (canPromote)
-            sb.AppendLine("✅ I can promote/demote users");
+            sb.AppendLine("✅ " + await CommandTexts.GetLocalizedCommandText("permissions_can_promote", chatId));
         else
-            sb.AppendLine("❌ I cannot promote/demote users");
+            sb.AppendLine("❌ " + await CommandTexts.GetLocalizedCommandText("permissions_can_promote", chatId));
             
         if (canRestrict)
-            sb.AppendLine("✅ I can restrict users");
+            sb.AppendLine("✅ " + await CommandTexts.GetLocalizedCommandText("permissions_can_restrict", chatId));
         else
-            sb.AppendLine("❌ I cannot restrict users");
+            sb.AppendLine("❌ " + await CommandTexts.GetLocalizedCommandText("permissions_can_restrict", chatId));
         
         sb.AppendLine();
         sb.AppendLine("**Users in this chat:**");
@@ -96,7 +96,7 @@ public class PermissionManager
         
         if (chatId != targetChatId)
         {
-            buttons.Add(new[] { InlineKeyboardButton.WithCallbackData("Back to chat list", "/permissions") });
+            buttons.Add(new[] { InlineKeyboardButton.WithCallbackData(await CommandTexts.GetLocalizedCommandText("permissions_back_chats", chatId), "/permissions") });
         }
 
         if (messageId.HasValue)
@@ -130,7 +130,7 @@ public class PermissionManager
         
         if (user == default)
         {
-            string errorText = "User not found.";
+            string errorText = await CommandTexts.GetLocalizedCommandText("permissions_user_not_found", chatId);
             
             if (messageId.HasValue)
             {
@@ -158,34 +158,34 @@ public class PermissionManager
         var permissions = await DatabaseManager.GetUserPermissions(userId, targetChatId);
         
         var sb = new StringBuilder();
-        sb.AppendLine($"**Permissions for {displayName}**");
+        sb.AppendLine(string.Format(await CommandTexts.GetLocalizedCommandText("permissions_for_user", chatId), displayName));
         sb.AppendLine();
         
-        sb.AppendLine($"Admin: {(permissions.IsAdmin ? "✅" : "❌")}");
+        sb.AppendLine(string.Format(await CommandTexts.GetLocalizedCommandText("permissions_admin", chatId), (permissions.IsAdmin ? "✅" : "❌")));
         
         if (permissions.CanPostMessages.HasValue)
-            sb.AppendLine($"Can post messages: {(permissions.CanPostMessages.Value ? "✅" : "❌")}");
+            sb.AppendLine(string.Format(await CommandTexts.GetLocalizedCommandText("permissions_can_post", chatId), (permissions.CanPostMessages.Value ? "✅" : "❌")));
             
         if (permissions.CanEditMessages.HasValue)
-            sb.AppendLine($"Can edit messages: {(permissions.CanEditMessages.Value ? "✅" : "❌")}");
+            sb.AppendLine(string.Format(await CommandTexts.GetLocalizedCommandText("permissions_can_edit", chatId), (permissions.CanEditMessages.Value ? "✅" : "❌")));
             
         if (permissions.CanDeleteMessages.HasValue)
-            sb.AppendLine($"Can delete messages: {(permissions.CanDeleteMessages.Value ? "✅" : "❌")}");
+            sb.AppendLine(string.Format(await CommandTexts.GetLocalizedCommandText("permissions_can_delete", chatId), (permissions.CanDeleteMessages.Value ? "✅" : "❌")));
             
         if (permissions.CanRestrictMembers.HasValue)
-            sb.AppendLine($"Can restrict members: {(permissions.CanRestrictMembers.Value ? "✅" : "❌")}");
+            sb.AppendLine(string.Format(await CommandTexts.GetLocalizedCommandText("permissions_can_restrict", chatId), (permissions.CanRestrictMembers.Value ? "✅" : "❌")));
             
         if (permissions.CanPromoteMembers.HasValue)
-            sb.AppendLine($"Can promote members: {(permissions.CanPromoteMembers.Value ? "✅" : "❌")}");
+            sb.AppendLine(string.Format(await CommandTexts.GetLocalizedCommandText("permissions_can_promote", chatId), (permissions.CanPromoteMembers.Value ? "✅" : "❌")));
             
         if (permissions.CanChangeInfo.HasValue)
-            sb.AppendLine($"Can change info: {(permissions.CanChangeInfo.Value ? "✅" : "❌")}");
+            sb.AppendLine(string.Format(await CommandTexts.GetLocalizedCommandText("permissions_can_change_info", chatId), (permissions.CanChangeInfo.Value ? "✅" : "❌")));
             
         if (permissions.CanInviteUsers.HasValue)
-            sb.AppendLine($"Can invite users: {(permissions.CanInviteUsers.Value ? "✅" : "❌")}");
+            sb.AppendLine(string.Format(await CommandTexts.GetLocalizedCommandText("permissions_can_invite", chatId), (permissions.CanInviteUsers.Value ? "✅" : "❌")));
             
         if (permissions.CanPinMessages.HasValue)
-            sb.AppendLine($"Can pin messages: {(permissions.CanPinMessages.Value ? "✅" : "❌")}");
+            sb.AppendLine(string.Format(await CommandTexts.GetLocalizedCommandText("permissions_can_pin", chatId), (permissions.CanPinMessages.Value ? "✅" : "❌")));
         
         var (canPromote, canRestrict, _) = await BotMain.CheckBotPermissions(targetChatId);
         
@@ -195,28 +195,28 @@ public class PermissionManager
         {
             if (canPromote)
             {
-                buttons.Add(new[] { InlineKeyboardButton.WithCallbackData("Demote to Regular User", $"/permissions/demote/{targetChatId}/{userId}") });
-                buttons.Add(new[] { InlineKeyboardButton.WithCallbackData("Edit Admin Permissions", $"/permissions/edit/admin/{targetChatId}/{userId}") });
+                buttons.Add(new[] { InlineKeyboardButton.WithCallbackData(await CommandTexts.GetLocalizedCommandText("permissions_demote", chatId), $"/permissions/demote/{targetChatId}/{userId}") });
+                buttons.Add(new[] { InlineKeyboardButton.WithCallbackData(await CommandTexts.GetLocalizedCommandText("permissions_edit_user", chatId), $"/permissions/edit/admin/{targetChatId}/{userId}") });
             }
         }
         else
         {
             if (canPromote)
             {
-                buttons.Add(new[] { InlineKeyboardButton.WithCallbackData("Promote to Admin", $"/permissions/promote/{targetChatId}/{userId}") });
+                buttons.Add(new[] { InlineKeyboardButton.WithCallbackData(await CommandTexts.GetLocalizedCommandText("permissions_promote", chatId), $"/permissions/promote/{targetChatId}/{userId}") });
             }
             
             if (canRestrict)
             {
-                buttons.Add(new[] { InlineKeyboardButton.WithCallbackData("Edit User Permissions", $"/permissions/edit/user/{targetChatId}/{userId}") });
+                buttons.Add(new[] { InlineKeyboardButton.WithCallbackData(await CommandTexts.GetLocalizedCommandText("permissions_edit_user", chatId), $"/permissions/edit/user/{targetChatId}/{userId}") });
             }
         }
         
-        buttons.Add(new[] { InlineKeyboardButton.WithCallbackData("Back to User List", $"/permissions/chat/{targetChatId}") });
+        buttons.Add(new[] { InlineKeyboardButton.WithCallbackData(await CommandTexts.GetLocalizedCommandText("permissions_back_users", chatId), $"/permissions/chat/{targetChatId}") });
         
         if (chatId != targetChatId)
         {
-            buttons.Add(new[] { InlineKeyboardButton.WithCallbackData("Back to Chat List", "/permissions") });
+            buttons.Add(new[] { InlineKeyboardButton.WithCallbackData(await CommandTexts.GetLocalizedCommandText("permissions_back_chats", chatId), "/permissions") });
         }
         
         if (messageId.HasValue)
