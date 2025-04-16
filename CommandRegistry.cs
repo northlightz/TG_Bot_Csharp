@@ -20,22 +20,22 @@ public static class CommandRegistry
 
     // Gets help text for all commands
     // متن راهنما برای تمام دستورات را دریافت می‌کند
-    public static string GetHelpText() =>
-        string.Join("\n", Commands.Keys.Select(c => $"/{c} - {GetCommandDescription(c)}"));
+    public static async Task<string> GetHelpText(long chatId)
+    {
+        var commandDescriptions = new List<string>();
+        foreach (var command in Commands.Keys)
+        {
+            var description = await GetCommandDescription(command, chatId);
+            commandDescriptions.Add($"/{command} - {description}");
+        }
+        return string.Join("\n", commandDescriptions);
+    }
 
     // Gets description for a specific command
     // توضیحات برای یک دستور خاص را دریافت می‌کند
-    private static string GetCommandDescription(string command) =>
-        command switch
-        {
-            "start" => "Show welcome message",
-            "help" => "Display help information",
-            "echo" => "Toggle message echoing",
-            "language" => "Toggle between English and Persian",
-            "users" => "List all tracked users",
-            "chats" => "List all tracked chats",
-            "stats" => "Show bot statistics",
-            "permissions" => "View and manage user permissions",
-            _ => "No description available",
-        };
+    private static async Task<string> GetCommandDescription(string command, long chatId)
+    {
+        var key = $"command_{command}";
+        return await CommandTexts.GetLocalizedCommandText(key, chatId);
+    }
 }

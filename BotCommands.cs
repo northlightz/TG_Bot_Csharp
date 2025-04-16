@@ -100,13 +100,16 @@ public class BotCommands
     // ارسال پیام خوش‌آمدگویی با یک دکمه داخلی برای راهنمایی
     public async Task StartCommand(Chat chat)
     {
+        var welcomeText = await CommandTexts.GetLocalizedCommandText("start_welcome", chat.Id);
+        var helpText = await CommandTexts.GetLocalizedCommandText("help_show", chat.Id);
+
         await _botClient.SendMessage(
             chatId: chat,
             parseMode: ParseMode.Html,
-            text: "Hello and welcome to this bot! To see more information do /help.",
+            text: welcomeText,
             replyMarkup: new InlineKeyboardMarkup(
                 new[] {
-                    new[] { InlineKeyboardButton.WithCallbackData("Show Help", "/help") }
+                    new[] { InlineKeyboardButton.WithCallbackData(helpText, "/help") }
                 }
             )
         );
@@ -116,13 +119,16 @@ public class BotCommands
     // ارائه اطلاعات راهنما درباره دستورات و قابلیت‌های موجود
     public async Task HelpCommand(Chat chat)
     {
+        var availableCommandsText = await CommandTexts.GetLocalizedCommandText("help_available", chat.Id);
         var buttons = CommandRegistry
             .Commands.Keys.Select(c => InlineKeyboardButton.WithCallbackData(c, $"/{c}"))
             .ToArray();
 
+        var helpText = await CommandRegistry.GetHelpText(chat.Id);
+
         await _botClient.SendMessage(
             chatId: chat.Id,
-            text: $"Available commands:\n{CommandRegistry.GetHelpText()}",
+            text: $"{availableCommandsText}\n{helpText}",
             replyMarkup: new InlineKeyboardMarkup(buttons)
         );
     }
