@@ -5,7 +5,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <PublishAot>true</PublishAot>
-    <PublishTrimmed>false</PublishTrimmed>
+    <PublishTrimmed>true</PublishTrimmed>
     <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
 
